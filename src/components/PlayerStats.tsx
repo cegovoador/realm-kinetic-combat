@@ -40,7 +40,12 @@ const PlayerStats = () => {
             </span>
             <span>{player.health}/{player.maxHealth}</span>
           </div>
-          <Progress className="h-2" value={(player.health / player.maxHealth) * 100} indicatorClassName="bg-red-500" />
+          <Progress 
+            className="h-2" 
+            value={(player.health / player.maxHealth) * 100} 
+            // Use className instead of indicatorClassName
+            style={{ '--progress-foreground': 'rgb(239, 68, 68)' }} 
+          />
         </div>
 
         {/* XP Bar */}
@@ -49,7 +54,12 @@ const PlayerStats = () => {
             <span>XP</span>
             <span>{player.xp}/{player.maxXp}</span>
           </div>
-          <Progress className="h-2" value={(player.xp / player.maxXp) * 100} indicatorClassName="bg-blue-500" />
+          <Progress 
+            className="h-2" 
+            value={(player.xp / player.maxXp) * 100} 
+            // Use className instead of indicatorClassName
+            style={{ '--progress-foreground': 'rgb(59, 130, 246)' }} 
+          />
         </div>
 
         {/* Stats */}

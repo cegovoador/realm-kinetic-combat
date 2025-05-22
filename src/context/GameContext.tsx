@@ -1,6 +1,5 @@
-
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { GameState, Character, Item, ChatMessage, Enemy } from '../types/gameTypes';
+import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { GameState, Character, Item, ChatMessage, GameMap as GameMapType } from '../types/gameTypes';
 import { mockItems, mockMaps } from '../data/mockData';
 import { generateEnemy } from '../utils/enemyGenerator';
 
@@ -17,7 +16,7 @@ const initialState: GameState = {
 // Action types
 type ActionType =
   | { type: 'CREATE_CHARACTER'; payload: Character }
-  | { type: 'LOAD_MAP'; payload: string }
+  | { type: 'LOAD_MAP'; payload: string | GameMapType }
   | { type: 'MOVE_PLAYER'; payload: { x: number; y: number } }
   | { type: 'ATTACK_ENEMY'; payload: string }
   | { type: 'GAIN_XP'; payload: number }
@@ -38,13 +37,22 @@ const gameReducer = (state: GameState, action: ActionType): GameState => {
         player: action.payload,
       };
     case 'LOAD_MAP':
-      const mapId = action.payload;
-      const map = mockMaps.find(m => m.id === mapId)?.map;
-      if (!map) return { ...state, error: 'Map not found' };
-      return {
-        ...state,
-        map,
-      };
+      // Check if payload is a string (map ID) or a map object
+      if (typeof action.payload === 'string') {
+        const mapId = action.payload;
+        const map = mockMaps.find(m => m.id === mapId)?.map;
+        if (!map) return { ...state, error: 'Map not found' };
+        return {
+          ...state,
+          map,
+        };
+      } else {
+        // Direct map object provided
+        return {
+          ...state,
+          map: action.payload,
+        };
+      }
     case 'MOVE_PLAYER':
       if (!state.player || !state.map) return state;
       const { x, y } = action.payload;
