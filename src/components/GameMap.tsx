@@ -3,16 +3,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { MapTile, Enemy } from '../types/gameTypes';
 import { Sword } from 'lucide-react';
+import { useGameEngine } from '../core/GameEngine';
 
 // Tile size in pixels
 const TILE_SIZE = 32;
 
 const GameMap = () => {
-  const { state, dispatch } = useGame();
+  const { state } = useGame();
   const { player, map } = state;
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
+  
+  // Use our game engine
+  const { setPlayerTargetPosition, attackEnemy } = useGameEngine();
 
   // Calculate visible area based on player position
   useEffect(() => {
@@ -32,53 +36,38 @@ const GameMap = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle keyboard movement
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!player || !map) return;
-
-      let newX = player.x;
-      let newY = player.y;
-
-      switch (e.key) {
-        case 'ArrowUp':
-        case 'w':
-          newY -= 1;
-          break;
-        case 'ArrowDown':
-        case 's':
-          newY += 1;
-          break;
-        case 'ArrowLeft':
-        case 'a':
-          newX -= 1;
-          break;
-        case 'ArrowRight':
-        case 'd':
-          newX += 1;
-          break;
-        default:
-          return;
+  // Handle map click for movement
+  const handleMapClick = (x: number, y: number) => {
+    if (!player || !map) return;
+    
+    // Check if clicked on an enemy first
+    const clickedEnemy = map.enemies.find(enemy => 
+      enemy.x === x && enemy.y === y && enemy.health > 0
+    );
+    
+    if (clickedEnemy) {
+      // If enemy is in range, attack it
+      const distance = Math.sqrt(
+        Math.pow(player.x - clickedEnemy.x, 2) + 
+        Math.pow(player.y - clickedEnemy.y, 2)
+      );
+      
+      if (distance <= 1.5) { // Attack range
+        attackEnemy(clickedEnemy.id);
+      } else {
+        // Move towards the enemy if not in range
+        setPlayerTargetPosition(x, y);
       }
-
-      // Check if the new position is within bounds and walkable
-      if (
-        newX >= 0 && newX < map.width &&
-        newY >= 0 && newY < map.height &&
-        map.tiles[newY][newX].walkable
-      ) {
-        dispatch({ type: 'MOVE_PLAYER', payload: { x: newX, y: newY } });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [player, map, dispatch]);
+    } else if (map.tiles[y][x].walkable) {
+      // Move to the clicked position if it's walkable
+      setPlayerTargetPosition(x, y);
+    }
+  };
 
   // Handle enemy interaction
   const handleEnemyClick = (enemyId: string) => {
     if (!player) return;
-    dispatch({ type: 'ATTACK_ENEMY', payload: enemyId });
+    attackEnemy(enemyId);
   };
 
   if (!player || !map) return <div className="text-white ui-font">Loading...</div>;
@@ -100,9 +89,11 @@ const GameMap = () => {
     }
   }
 
-  // Get visible enemies
+  // Get visible enemies (only living ones)
   const visibleEnemies = map.enemies.filter(
-    enemy => enemy.x >= startX && enemy.x < endX && enemy.y >= startY && enemy.y < endY
+    enemy => enemy.health > 0 && 
+    enemy.x >= startX && enemy.x < endX && 
+    enemy.y >= startY && enemy.y < endY
   );
 
   // Calculate player offset for centered view
@@ -144,6 +135,7 @@ const GameMap = () => {
                     key={`tile-${x}-${y}`}
                     className={`${getTileColor(map.tiles[y][x].type)} border border-black border-opacity-20`}
                     style={{ width: TILE_SIZE, height: TILE_SIZE }}
+                    onClick={() => handleMapClick(x, y)}
                   />
                 );
               })}

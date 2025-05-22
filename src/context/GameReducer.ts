@@ -1,4 +1,3 @@
-
 import { GameState } from '../types/gameTypes';
 import { GameAction } from './GameActions';
 import { mockMaps } from '../data/mockData';
@@ -42,6 +41,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           ...state.player,
           x,
           y,
+          // Update last move time for animation and movement speed calculations
+          lastMoveTime: Date.now()
         },
       };
     case 'ATTACK_ENEMY':
@@ -74,6 +75,17 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         ...state,
         error: action.payload,
       };
+    case 'UPDATE_ENEMIES':
+      if (!state.map) return state;
+      return {
+        ...state,
+        map: {
+          ...state.map,
+          enemies: action.payload,
+        },
+      };
+    case 'RESPAWN_ENEMIES':
+      return handleRespawnEnemies(state, action.payload);
     default:
       return state;
   }
@@ -88,19 +100,42 @@ function handleAttackEnemy(state: GameState, enemyId: string): GameState {
   const enemy = state.map.enemies[enemyIndex];
   const player = state.player;
 
+  // Record last attack time for cooldown
+  const updatedPlayer = {
+    ...player,
+    lastAttackTime: Date.now(),
+    attackSpeed: 1000 // 1 second cooldown between attacks
+  };
+
   // Calculate damage
   const playerDamage = Math.max(1, player.attack - enemy.defense / 2);
   const newEnemyHealth = Math.max(0, enemy.health - playerDamage);
 
   // If enemy is defeated
   if (newEnemyHealth <= 0) {
-    // Generate new enemy
-    const newEnemy = generateEnemy(enemy.level);
-    
+    // Add message about defeating the enemy
+    const messages = [
+      ...state.messages,
+      {
+        id: Date.now().toString(),
+        sender: 'System',
+        content: `You defeated ${enemy.name} and gained ${enemy.xpReward} XP!`,
+        timestamp: Date.now(),
+        type: 'system',
+      },
+    ];
+
+    // Update enemy to defeated state (we'll leave it on the map but dead)
+    const updatedEnemies = [
+      ...state.map.enemies.slice(0, enemyIndex),
+      { ...enemy, health: 0, deathTime: Date.now() },
+      ...state.map.enemies.slice(enemyIndex + 1),
+    ];
+
     // Add XP to player
     const newPlayer = {
-      ...player,
-      xp: player.xp + enemy.xpReward,
+      ...updatedPlayer,
+      xp: updatedPlayer.xp + enemy.xpReward,
     };
 
     // Check if player leveled up
@@ -122,22 +157,9 @@ function handleAttackEnemy(state: GameState, enemyId: string): GameState {
       } : newPlayer,
       map: {
         ...state.map,
-        enemies: [
-          ...state.map.enemies.slice(0, enemyIndex),
-          newEnemy,
-          ...state.map.enemies.slice(enemyIndex + 1),
-        ],
+        enemies: updatedEnemies,
       },
-      messages: [
-        ...state.messages,
-        {
-          id: Date.now().toString(),
-          sender: 'System',
-          content: `You defeated ${enemy.name} and gained ${enemy.xpReward} XP!`,
-          timestamp: Date.now(),
-          type: 'system',
-        },
-      ],
+      messages,
     };
   } else {
     // Enemy takes damage but survives
@@ -148,7 +170,7 @@ function handleAttackEnemy(state: GameState, enemyId: string): GameState {
     return {
       ...state,
       player: {
-        ...player,
+        ...updatedPlayer,
         health: newPlayerHealth,
       },
       map: {
@@ -158,6 +180,7 @@ function handleAttackEnemy(state: GameState, enemyId: string): GameState {
           {
             ...enemy,
             health: newEnemyHealth,
+            lastAttackTime: Date.now()
           },
           ...state.map.enemies.slice(enemyIndex + 1),
         ],
@@ -311,6 +334,91 @@ function handleUnequipItem(state: GameState, slotToUnequip: string): GameState {
         ...state.player.equipment,
         [typedSlot]: undefined,
       },
+    },
+  };
+}
+
+function handleRespawnEnemies(state: GameState, count: number): GameState {
+  if (!state.map) return state;
+  
+  // Get current time
+  const currentTime = Date.now();
+  
+  // Filter out dead enemies that are ready to be removed (dead for more than 30 seconds)
+  const remainingEnemies = state.map.enemies.filter(enemy => {
+    if (enemy.health <= 0 && enemy.deathTime && currentTime - enemy.deathTime > 30000) {
+      return false; // Remove this enemy
+    }
+    return true; // Keep this enemy
+  });
+  
+  // Generate new enemies to replace the ones we're removing
+  const newEnemies: Enemy[] = [];
+  for (let i = 0; i < count; i++) {
+    // Generate an enemy with level appropriate for the area
+    const level = Math.floor(Math.random() * 3) + 1; // Level 1-3 for starter area
+    const enemy = generateEnemy(level);
+    
+    // Find a valid spawn position (not occupied and walkable)
+    const isPositionOccupied = (x: number, y: number) => {
+      // Check if tile is walkable
+      if (!state.map || !state.map.tiles[y][x].walkable) return true;
+      
+      // Check if player is at this position
+      if (state.player && state.player.x === x && state.player.y === y) return true;
+      
+      // Check if any enemy is at this position
+      return state.map.enemies.some(e => e.x === x && e.y === y);
+    };
+    
+    // Position the enemy randomly, but not on obstacles or water or near the player
+    const position = {
+      x: 0,
+      y: 0
+    };
+    
+    let found = false;
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    while (!found && attempts < maxAttempts) {
+      // Generate random position
+      position.x = Math.floor(Math.random() * (state.map.width - 2)) + 1;
+      position.y = Math.floor(Math.random() * (state.map.height - 2)) + 1;
+      
+      // Check if position is valid
+      if (!isPositionOccupied(position.x, position.y)) {
+        // If player exists, make sure enemy is not too close to player
+        if (state.player) {
+          const distToPlayer = Math.sqrt(
+            Math.pow(position.x - state.player.x, 2) + 
+            Math.pow(position.y - state.player.y, 2)
+          );
+          
+          if (distToPlayer > 5) { // Spawn at least 5 tiles away from player
+            found = true;
+          }
+        } else {
+          found = true;
+        }
+      }
+      
+      attempts++;
+    }
+    
+    // If we found a valid position, add the enemy
+    if (found) {
+      enemy.x = position.x;
+      enemy.y = position.y;
+      newEnemies.push(enemy);
+    }
+  }
+  
+  return {
+    ...state,
+    map: {
+      ...state.map,
+      enemies: [...remainingEnemies, ...newEnemies],
     },
   };
 }

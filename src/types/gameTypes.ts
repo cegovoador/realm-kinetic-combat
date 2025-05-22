@@ -21,6 +21,11 @@ export interface Character {
   y: number;
   inventory: Item[];
   equipment: Equipment;
+  // New properties for real-time movement and combat
+  lastMoveTime?: number;
+  lastAttackTime?: number;
+  attackSpeed?: number;
+  attackRange?: number;
 }
 
 export interface Item {
@@ -75,6 +80,9 @@ export interface Enemy {
     item: Item;
     chance: number;
   }[];
+  // New properties for real-time movement and combat
+  lastAttackTime?: number;
+  deathTime?: number;
 }
 
 export interface NPC {

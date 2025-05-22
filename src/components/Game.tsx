@@ -6,48 +6,18 @@ import GameMap from './GameMap';
 import PlayerStats from './PlayerStats';
 import Chat from './Chat';
 import Inventory from './Inventory';
-import { generateEnemy, generateRandomPosition } from '../utils/enemyGenerator';
 
 const Game = () => {
   const { state, dispatch } = useGame();
   const { player, map } = state;
 
-  // If map is loaded, populate it with enemies
+  // Load map when player is created
   useEffect(() => {
-    if (map && map.enemies.length === 0) {
-      // Populate the map with some initial enemies
-      const enemyCount = 5; // Start with 5 enemies
-      const newEnemies = [];
-      
-      for (let i = 0; i < enemyCount; i++) {
-        // Generate enemies with levels appropriate for the map (assuming level 1-3 for start)
-        const level = Math.floor(Math.random() * 3) + 1;
-        const enemy = generateEnemy(level);
-        
-        // Position the enemy randomly, but not on obstacles or water
-        const position = generateRandomPosition(
-          map.width, 
-          map.height, 
-          (x, y) => !map.tiles[y][x].walkable || 
-                     (player && player.x === x && player.y === y)
-        );
-        
-        enemy.x = position.x;
-        enemy.y = position.y;
-        
-        newEnemies.push(enemy);
-      }
-      
-      // Update the map with the new enemies
-      dispatch({
-        type: 'LOAD_MAP',
-        payload: {
-          ...map,
-          enemies: newEnemies,
-        },
-      });
+    if (player && !map) {
+      // Load the starter map
+      dispatch({ type: 'LOAD_MAP', payload: 'start' });
     }
-  }, [map, player, dispatch]);
+  }, [player, map, dispatch]);
 
   // Add some welcome system messages when the game starts
   useEffect(() => {
@@ -70,7 +40,7 @@ const Game = () => {
           payload: {
             id: 'welcome-2',
             sender: 'System',
-            content: 'Use arrow keys or WASD to move. Click on enemies to attack them.',
+            content: 'Click on the map to move. Click on enemies to attack them.',
             timestamp: Date.now(),
             type: 'system',
           },

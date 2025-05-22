@@ -1,5 +1,5 @@
 
-import { Character, Item, ChatMessage, GameMap } from '../types/gameTypes';
+import { Character, Item, ChatMessage, GameMap, Enemy } from '../types/gameTypes';
 
 // Action types
 export type GameAction =
@@ -14,4 +14,6 @@ export type GameAction =
   | { type: 'UNEQUIP_ITEM'; payload: string }
   | { type: 'ADD_MESSAGE'; payload: ChatMessage }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'UPDATE_ENEMIES'; payload: Enemy[] }
+  | { type: 'RESPAWN_ENEMIES'; payload: number };
