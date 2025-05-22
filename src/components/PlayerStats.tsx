@@ -41,10 +41,9 @@ const PlayerStats = () => {
             <span>{player.health}/{player.maxHealth}</span>
           </div>
           <Progress 
-            className="h-2" 
-            value={(player.health / player.maxHealth) * 100} 
-            // Use className instead of indicatorClassName
-            style={{ '--progress-foreground': 'rgb(239, 68, 68)' }} 
+            className="h-2 bg-gray-700" 
+            value={(player.health / player.maxHealth) * 100}
+            style={{ transform: `translateX(0%)` }}
           />
         </div>
 
@@ -55,10 +54,9 @@ const PlayerStats = () => {
             <span>{player.xp}/{player.maxXp}</span>
           </div>
           <Progress 
-            className="h-2" 
-            value={(player.xp / player.maxXp) * 100} 
-            // Use className instead of indicatorClassName
-            style={{ '--progress-foreground': 'rgb(59, 130, 246)' }} 
+            className="h-2 bg-gray-700" 
+            value={(player.xp / player.maxXp) * 100}
+            style={{ transform: `translateX(0%)` }}
           />
         </div>
 
