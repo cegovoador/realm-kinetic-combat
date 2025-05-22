@@ -1,4 +1,5 @@
-import { GameState } from '../types/gameTypes';
+
+import { GameState, Enemy, Item, ChatMessage } from '../types/gameTypes';
 import { GameAction } from './GameActions';
 import { mockMaps } from '../data/mockData';
 import { generateEnemy } from '../utils/enemyGenerator';
@@ -121,7 +122,7 @@ function handleAttackEnemy(state: GameState, enemyId: string): GameState {
         sender: 'System',
         content: `You defeated ${enemy.name} and gained ${enemy.xpReward} XP!`,
         timestamp: Date.now(),
-        type: 'system',
+        type: 'system' as const,
       },
     ];
 
@@ -216,7 +217,7 @@ function handleGainXP(state: GameState, xpAmount: number): GameState {
           sender: 'System',
           content: `You leveled up to level ${state.player.level + 1}!`,
           timestamp: Date.now(),
-          type: 'system',
+          type: 'system' as const,
         },
       ],
     };
@@ -254,13 +255,13 @@ function handleLevelUp(state: GameState): GameState {
         sender: 'System',
         content: `You leveled up to level ${state.player.level + 1}!`,
         timestamp: Date.now(),
-        type: 'system',
+        type: 'system' as const,
       },
     ],
   };
 }
 
-function handleAddItem(state: GameState, item: any): GameState {
+function handleAddItem(state: GameState, item: Item): GameState {
   if (!state.player) return state;
   return {
     ...state,
@@ -275,13 +276,13 @@ function handleAddItem(state: GameState, item: any): GameState {
         sender: 'System',
         content: `You obtained ${item.name}!`,
         timestamp: Date.now(),
-        type: 'system',
+        type: 'system' as const,
       },
     ],
   };
 }
 
-function handleEquipItem(state: GameState, item: any): GameState {
+function handleEquipItem(state: GameState, item: Item): GameState {
   if (!state.player) return state;
   if (!item.slot) return state;
   
@@ -312,7 +313,7 @@ function handleEquipItem(state: GameState, item: any): GameState {
         sender: 'System',
         content: `Equipped ${item.name}!`,
         timestamp: Date.now(),
-        type: 'system',
+        type: 'system' as const,
       },
     ],
   };
