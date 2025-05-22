@@ -1,6 +1,9 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
 
 @layer base {
   :root {
@@ -35,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -97,5 +93,37 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .game-font {
+    font-family: 'Press Start 2P', cursive;
+  }
+
+  .ui-font {
+    font-family: 'Silkscreen', sans-serif;
+  }
+
+  .pixel-border {
+    box-shadow: 
+      -3px 0 0 0 #000,
+      3px 0 0 0 #000,
+      0 -3px 0 0 #000,
+      0 3px 0 0 #000;
+  }
+
+  .game-container {
+    @apply w-full h-screen flex flex-col bg-game-ui-background overflow-hidden relative;
+  }
+
+  .game-button {
+    @apply px-4 py-2 bg-game-ui-accent text-white ui-font rounded 
+           hover:bg-opacity-90 transition-all transform hover:scale-105 
+           active:scale-95 focus:outline-none focus:ring-2 focus:ring-game-ui-accent;
+  }
+
+  .game-panel {
+    @apply bg-game-ui-background border-2 border-game-ui-border rounded p-4 text-white;
   }
 }

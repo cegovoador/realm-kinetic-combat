@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Game specific colors
+				game: {
+					warrior: '#D02A1D',
+					mage: '#2D5DD0',
+					archer: '#25A33C',
+					ground: '#5E4D35',
+					grass: '#2E5728',
+					water: '#2F5A96',
+					ui: {
+						background: '#1D1D2A',
+						border: '#3D3D5A',
+						accent: '#6553C7',
+					}
 				}
 			},
 			borderRadius: {
@@ -84,11 +99,21 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
+				},
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite'
 			}
 		}
 	},
